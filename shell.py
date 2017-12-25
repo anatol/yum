@@ -27,7 +27,7 @@ from yum import Errors
 from yum.constants import *
 import yum.logginglevels as logginglevels
 from yum.i18n import to_utf8
-import __builtin__
+import builtins
 
 class YumShell(cmd.Cmd):
     """A class to implement an interactive yum shell."""
@@ -45,7 +45,7 @@ class YumShell(cmd.Cmd):
         self.shell_specific_commands = ['repo', 'repository', 'exit', 'quit',
                 'run', 'ts', 'transaction', 'config']
                 
-        self.commandlist = self.shell_specific_commands + self.base.yum_cli_commands.keys()
+        self.commandlist = self.shell_specific_commands + list(self.base.yum_cli_commands.keys())
         self.logger = logging.getLogger("yum.cli")
         self.verbose_logger = logging.getLogger("yum.verbose.cli")
 
@@ -67,10 +67,10 @@ class YumShell(cmd.Cmd):
             
         try:
             inputs = shlex.split(input_string)
-        except ValueError, e:
+        except ValueError as e:
             self.logger.critical('Script Error: %s', e)
             if self.from_file:
-                raise Errors.YumBaseError, "Fatal error in script, exiting"
+                raise Errors.YumBaseError("Fatal error in script, exiting")
         
         return inputs
 
@@ -88,15 +88,15 @@ class YumShell(cmd.Cmd):
 
             return rret
 
-        __builtin__.raw_input = _sick_hack_raw_input
+        builtins.raw_input = _sick_hack_raw_input
 
         try:
             cret = cmd.Cmd.cmdloop(self, *args, **kwargs)
         except:
-            __builtin__.raw_input  = oraw_input
+            builtins.raw_input  = oraw_input
             raise
 
-        __builtin__.raw_input = oraw_input
+        builtins.raw_input = oraw_input
 
         return cret
 
@@ -272,7 +272,7 @@ class YumShell(cmd.Cmd):
         elif cmd == 'solve':
             try:
                 (code, msgs) = self.base.buildTransaction()
-            except Errors.YumBaseError, e:
+            except Errors.YumBaseError as e:
                 self.logger.critical('Error building transaction: %s', e)
                 self.result = 1
                 return False
@@ -404,10 +404,10 @@ class YumShell(cmd.Cmd):
                     # to setup the enabled one. And having some setup is bad.
                     self.base.pkgSack
                     changed = self.base.repos.enableRepo(repo)
-                except Errors.ConfigError, e:
+                except Errors.ConfigError as e:
                     self.logger.critical(e)
                     self.result = 1
-                except Errors.RepoError, e:
+                except Errors.RepoError as e:
                     self.logger.critical(e)
                     self.result = 1
                     
@@ -415,7 +415,7 @@ class YumShell(cmd.Cmd):
                     for repo in changed:
                         try:
                             self.base.doRepoSetup(thisrepo=repo)
-                        except Errors.RepoError, e:
+                        except Errors.RepoError as e:
                             self.logger.critical('Disabling Repository')
                             self.base.repos.disableRepo(repo)
                             self.result = 1
@@ -428,10 +428,10 @@ class YumShell(cmd.Cmd):
             for repo in repos:
                 try:
                     offrepos = self.base.repos.disableRepo(repo)
-                except Errors.ConfigError, e:
+                except Errors.ConfigError as e:
                     self.logger.critical(e)
                     self.result = 1
-                except Errors.RepoError, e:
+                except Errors.RepoError as e:
                     self.logger.critical(e)
                     self.result = 1
 
@@ -448,9 +448,9 @@ class YumShell(cmd.Cmd):
                 
     def do_test(self, line):
         (cmd, args, line) = self.parseline(line)
-        print cmd
-        print args
-        print line
+        print(cmd)
+        print(args)
+        print(line)
         self.result = 0
         
     def do_run(self, line):
@@ -469,13 +469,13 @@ class YumShell(cmd.Cmd):
                     return False
 
                 returnval = self.base.doTransaction()
-            except Errors.YumBaseError, e:
+            except Errors.YumBaseError as e:
                 self.logger.critical('Error: %s', e)
                 self.result = 1
-            except KeyboardInterrupt, e:
+            except KeyboardInterrupt as e:
                 self.logger.critical('\n\nExiting on user cancel')
                 self.result = 1
-            except IOError, e:
+            except IOError as e:
                 if e.errno == 32:
                     self.logger.critical('\n\nExiting on Broken Pipe')
                 self.result = 1
